@@ -37,7 +37,7 @@ Getting Started
 .. code-block:: pycon
 
     >>> import redis
-    >>> r = redis.StrictRedis(host='localhost', port=6379, db=0)
+    >>> r = redis.Redis([{'host': localhost', 'port':6379, 'db': 0}])
     >>> r.set('foo', 'bar')
     True
     >>> r.get('foo')
@@ -113,7 +113,6 @@ connections are managed.
 .. code-block:: pycon
 
     >>> pool = redis.ConnectionPool(host='localhost', port=6379, db=0)
-    >>> r = redis.Redis(connection_pool=pool)
 
 Connections
 ^^^^^^^^^^^
@@ -695,4 +694,3 @@ Special thanks to:
   which some of the socket code is still used.
 * Alexander Solovyov for ideas on the generic response callback system.
 * Paul Hubbard for initial packaging support.
-
