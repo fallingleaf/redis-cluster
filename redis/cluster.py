@@ -16,10 +16,13 @@ class RedisDB(object):
 class SingleDB(RedisDB):
     def __init__(self, hosts, **kwargs):
         host = hosts[0]
-        db = host.get('db', 0)
-        self.pool = ConnectionPool(host=host['host'],
-                                   port=host['port'],
-                                   db=db, **kwargs)
+        if isinstance(host, str):
+            self.pool = ConnectionPool.from_url(host, **kwargs)
+        else:
+            db = host.get('db', 0)
+            self.pool = ConnectionPool(host=host['host'],
+                                       port=host['port'],
+                                       db=db, **kwargs)
 
     def get_pool(self, key=None):
         return self.pool
