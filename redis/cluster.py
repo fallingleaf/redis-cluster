@@ -13,6 +13,20 @@ class RedisDB(object):
         raise NotImplementedError
 
 
+class SingleDB(RedisDB):
+    def __init__(self, hosts, **kwargs):
+        host = hosts[0]
+        self.pool = ConnectionPool(host=host['host'],
+                                   port=host['port'], **kwargs)
+
+    def getPool(self, key=None):
+        return self.pool
+
+    def execute_command(self, *args, **kwargs):
+        pool = self.get_pool()
+        return pool.execute_command(*args, **kwargs)
+
+
 class RoundRobinDB(RedisDB):
     def __init__(self, hosts, **kwargs):
         self.pools = []

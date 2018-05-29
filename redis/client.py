@@ -10,9 +10,9 @@ import hashlib
 from redis._compat import (b, basestring, bytes, imap, iteritems, iterkeys,
                            itervalues, izip, long, nativestr, unicode,
                            safe_unicode)
-from redis.connection import (ConnectionPool, UnixDomainSocketConnection,
+from redis.connection import (UnixDomainSocketConnection,
                               SSLConnection, Token)
-from redis.cluster import (Cluster, RoundRobinDB)
+from redis.cluster import (Cluster, SingleDB)
 from redis.lock import Lock, LuaLock
 from redis.exceptions import (
     ConnectionError,
@@ -462,7 +462,7 @@ class StrictRedis(object):
     def __init__(self, hosts, socket_timeout=None,
                  socket_connect_timeout=None,
                  socket_keepalive=None, socket_keepalive_options=None,
-                 unix_socket_path=None, pool_class=RoundRobinDB,
+                 unix_socket_path=None, pool_class=SingleDB,
                  encoding='utf-8', encoding_errors='strict',
                  charset=None, errors=None,
                  decode_responses=False, retry_on_timeout=False,
