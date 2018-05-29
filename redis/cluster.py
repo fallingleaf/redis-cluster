@@ -69,8 +69,11 @@ class Cluster(RedisDB):
             return ''
 
         if '?' in host:
-            return host[idx+1: -5]
-        return host[idx+1: -2]
+            e = host.find('?')
+            return host[idx+1: e]
+        else:
+            e = host.find('/')
+            return host[idx+1: e]
 
     def init_pools(self, hosts, **kwargs):
         for host in hosts:
