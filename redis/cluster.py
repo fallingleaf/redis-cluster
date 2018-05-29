@@ -143,13 +143,3 @@ class Cluster(RedisDB):
         return '\n'.join(addrs)
 
     __repr__ = __str__
-
-
-if __name__ == '__main__':
-    cluster = Cluster(['redis://@10.150.92.50:6379/0'])
-    print("list of cluster nodes...\n", cluster)
-    cluster.set('CME3_CACHE_QUERY_DOCUMENT_WWW_CUTENESS_COM', 'abc123')
-    cluster.set('{CME3_CACHE}_GOOGLE_KW_WWW_CUTENESS_COM', 'dogs')
-
-    print(cluster.get('{CME3_CACHE}_QUERY_DOCUMENT_WWW_CUTENESS_COM'))
-    print(cluster.get('{CME3_CACHE}_GOOGLE_KW_WWW_CUTENESS_COM'))
