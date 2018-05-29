@@ -21,7 +21,7 @@ class SingleDB(RedisDB):
                                    port=host['port'],
                                    db=db, **kwargs)
 
-    def getPool(self, key=None):
+    def get_pool(self, key=None):
         return self.pool
 
     def execute_command(self, *args, **kwargs):
