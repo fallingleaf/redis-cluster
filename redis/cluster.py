@@ -3,6 +3,7 @@ from redis.crc16 import key_to_slot
 from redis.exceptions import (
     RedisError
 )
+import random
 
 
 class RedisDB(object):
@@ -90,7 +91,8 @@ class Cluster(RedisDB):
 
     def get_random_pool(self):
         pools = list(self.cluster_pools.values())
-        return pools[0]
+        idx = random.randint(0, len(pools) - 1)
+        return pools[idx]
 
     def reset_slots(self, **kwargs):
         pool = self.get_random_pool()
