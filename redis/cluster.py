@@ -66,14 +66,14 @@ class Cluster(RedisDB):
 
     def parse_addr(self, host):
         idx = host.find('@')
-        if not idx:
+        if idx == -1:
             return ''
 
         if '?' in host:
-            e = host.find('?')
+            e = host.rfind('?')
             return host[idx+1: e]
         else:
-            e = host.find('/')
+            e = host.rfind('/')
             return host[idx+1: e]
 
     def init_pools(self, hosts, **kwargs):
