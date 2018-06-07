@@ -77,6 +77,8 @@ class Cluster(RedisDB):
             return host[idx+1: e]
 
     def init_pools(self, hosts, **kwargs):
+        # Ensure consistency of db value
+        kwargs.update({'db': 0})
         for host in hosts:
             if isinstance(host, str):
                 addr = self.parse_addr(host)
