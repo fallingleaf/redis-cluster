@@ -102,6 +102,7 @@ class Cluster(RedisDB):
         if not isinstance(resp, (list, tuple)):
             raise RedisError('Unable to locate redis slots.')
 
+        _pools = {}
         for elem in resp:
             _start, _end, master = elem[0], elem[1], elem[2]
             ip, port = master[0], master[1]
@@ -110,10 +111,11 @@ class Cluster(RedisDB):
             for i in range(int(_start), int(_end) + 1):
                 self.mapping[i] = addr
 
-            if addr not in self.cluster_pools:
-                self.cluster_pools[addr] = ConnectionPool(host=ip,
-                                                          port=port,
-                                                          **kwargs)
+            if addr not in _pools:
+                _pools[addr] = ConnectionPool(host=ip, port=port, **kwargs)
+
+        self.cluster_pools.clear()
+        self.cluster_pools = _pools
 
     def _key_to_addr(self, key):
         slot = key_to_slot(key)
