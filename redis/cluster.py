@@ -97,6 +97,11 @@ class Cluster(RedisDB):
         idx = random.randint(0, len(pools) - 1)
         return pools[idx]
 
+    def _stringconv(self, t):
+        if isinstance(t, bytes):
+            return t.decode('utf-8')
+        return t
+
     def reset_slots(self, **kwargs):
         pool = self.get_random_pool()
         resp = pool.execute_command('CLUSTER', 'SLOTS')
@@ -106,7 +111,7 @@ class Cluster(RedisDB):
         _pools = {}
         for elem in resp:
             _start, _end, master = elem[0], elem[1], elem[2]
-            ip, port = master[0], master[1]
+            ip, port = self._stringconv(master[0]), self._stringconv(master[1])
             addr = '{}:{}'.format(ip, port)
 
             for i in range(int(_start), int(_end) + 1):
