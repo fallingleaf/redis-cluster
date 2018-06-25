@@ -1,7 +1,7 @@
 from redis.connection import ConnectionPool
 from redis.crc16 import key_to_slot
 from redis.exceptions import (
-    RedisError
+    RedisError, ResponseError, InvalidResponse, ClusterError, ConnectionError
 )
 import random
 
@@ -61,6 +61,7 @@ class Cluster(RedisDB):
     def __init__(self, hosts, **kwargs):
         self.mapping = {}
         self.cluster_pools = {}
+        self.max_resets = kwargs.pop('max_resets', 2)
         self.init_pools(hosts, **kwargs)
         self.pool_kwargs = kwargs
 
@@ -112,7 +113,8 @@ class Cluster(RedisDB):
                 self.mapping[i] = addr
 
             if addr not in _pools:
-                _pools[addr] = ConnectionPool(host=ip, port=port, **kwargs)
+                _pools[addr] = (self.cluster_pools.pop(addr, None) or
+                                ConnectionPool(host=ip, port=port, **kwargs))
 
         self.cluster_pools.clear()
         self.cluster_pools = _pools
@@ -134,15 +136,59 @@ class Cluster(RedisDB):
                                       **self.pool_kwargs)
                 self.cluster_pools[addr] = pool
             return pool
-        raise RedisError("No slot found for key...", key)
+        raise ClusterError("No slot found for key...", key)
+
+    def redirect_info(self, msg):
+        parts = msg.split()
+        if len(parts) < 3:
+            return None, None
+        return parts[1], parts[2]
 
     def execute_command(self, *args, **kwargs):
-        if len(args) < 2:
-            pool = self.get_pool()
-        else:
-            key = str(args[1])
-            pool = self.get_pool(key=key)
-        return pool.execute_command(*args, **kwargs)
+        pool = kwargs.pop('pool', None)
+        ask = kwargs.pop('ask', False)
+
+        if not pool:
+            if len(args) < 2:
+                pool = self.get_pool()
+            else:
+                key = str(args[1])
+                pool = self.get_pool(key=key)
+        try:
+            if ask:
+                pool.execute_command('ASKING')
+                ask = False
+            response = pool.execute_command(*args, **kwargs)
+            return response
+
+        except (ConnectionError, ResponseError) as e:
+            msg = str(e)
+            ask = msg.startswith('ASK ')
+            moved = msg.startswith('MOVED ')
+
+            num_resets = kwargs.pop('num_resets', 0)
+            if num_resets > self.max_resets:
+                raise ClusterError('Too many resets happened.')
+
+            self.reset_slots()
+            num_resets += 1
+            kwargs.update({'num_resets': num_resets})
+
+            if ask or moved:
+                _, addr = self.redirect_info(msg)
+
+                if not addr or addr not in self.cluster_pools:
+                    raise InvalidResponse('Invalid redirect node %s.' % addr)
+
+                pool = self.cluster_pools[addr]
+
+                kwargs.update({'ask': ask,
+                               'pool': pool})
+
+            elif isinstance(e, ResponseError):
+                raise
+
+            return self.execute_command(*args, **kwargs)
 
     def __str__(self):
         addrs = self.cluster_pools.keys()

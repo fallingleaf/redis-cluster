@@ -28,6 +28,10 @@ class TimeoutError(RedisError):
     pass
 
 
+class ClusterError(RedisError):
+    pass
+
+
 class BusyLoadingError(ConnectionError):
     pass
 
