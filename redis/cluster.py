@@ -118,8 +118,10 @@ class Cluster(RedisDB):
                 self.mapping[i] = addr
 
             if addr not in _pools:
-                _pools[addr] = (self.cluster_pools.pop(addr, None) or
-                                ConnectionPool(host=ip, port=port, **kwargs))
+                p = (self.cluster_pools.pop(addr, None) or
+                     ConnectionPool(host=ip, port=port, **kwargs))
+                p.addr = addr
+                _pools[addr] = p
 
         self.cluster_pools.clear()
         self.cluster_pools = _pools
@@ -174,6 +176,11 @@ class Cluster(RedisDB):
             num_resets = kwargs.pop('num_resets', 0)
             if num_resets > self.max_resets:
                 raise ClusterError('Too many resets happened.')
+
+            # Disconnect current pool and remove pool from cluster
+            current_addr = pool.addr
+            pool.disconnect()
+            self.cluster_pools.pop(current_addr, None)
 
             self.reset_slots()
             num_resets += 1

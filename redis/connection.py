@@ -931,7 +931,7 @@ class ConnectionPool(object):
         self.connection_class = connection_class
         self.connection_kwargs = connection_kwargs
         self.max_connections = max_connections
-
+        self.addr = None
         self.reset()
 
     def __repr__(self):
